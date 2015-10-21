@@ -1,7 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include <iostream>
-#include <windows.h>
 //#include <CImg.h>
 using namespace std;
 //using namespace cimg_library;
@@ -13,7 +12,7 @@ using namespace std;
 int main()
 {	
 	int vertical =500, horizontal = 500;
-    sf::RenderWindow window(sf::VideoMode (500,500), "OpenGL");
+    sf::RenderWindow window(sf::VideoMode (500,500), "Squares Test");
 	
 	sf::VertexArray myarray[10][10];
 	sf::VertexArray::VertexArray(sf::PrimitiveType::Points);
@@ -29,18 +28,13 @@ int main()
 
 	get[1][2].setTexture(texture);*/
 
-
-	get[1][2].setTextureRect(sf::IntRect(500, 500, 32, 32));
-
+	
+	sf::RectangleShape rect[50][50];
 	
 
-	
-	for(int j =0; j<600 ; j++)
+	for(int j =0; j<50 ; j++)
 	{
-		if (j > horizontal )
-		{
-			break;
-		}
+		
 		
 	for (int i = 0; i < 50; i++) 
 	{
@@ -48,25 +42,41 @@ int main()
 		{
 			i = i -vertical ;
 		}
+		
 
 	sf::Vertex vertex;
 	vertex.position = sf::Vector2f(j,i);
-	sf::RectangleShape rect[10];
-	rect[5].setSize(sf::Vector2f(10, 10));
-	rect[5].setFillColor(sf::Color::Red);
-	rect[5].setPosition(50,50);
-	rect[6].setSize(sf::Vector2f(10, 10));
-	rect[6].setFillColor(sf::Color::Red);
-	rect[6].setPosition(100,50);
+
+	rect[i][j].setSize(sf::Vector2f(20, 20));
+	rect[i][j].setFillColor(sf::Color::Red);
+	rect[i][j].setPosition(i*10,j*10);
+	rect[i][j].setFillColor(sf::Color::Red);
+
 	//rect[5].setScale(100,100);
-	window.clear();
-	window.draw(rect[5]);
-	window.draw(rect[6]);
-	window.display();
-	Sleep(599);
+	//window.clear();
+	
+	}
+	}
+	//window.draw(rect[6]);
+	for (int i = 0; i<50; i++)
+	{
+		for (int j = 0; j<50; j++)
+		{
+			
+	
+			
+			window.draw(rect[i][j]);
+		
+			
+		}
+		window.display();
+			Sleep(100);
+			window.clear();
+	}
+	
 	int points[50];
-	points[i] = rand() %2 ;
-	if (points[i] ==1)
+	//points[i] = rand() %2 ;
+	/*if (points[i] ==1)
 	{
 		myarray[1][2].append(vertex);
 		
@@ -75,14 +85,14 @@ int main()
 
 	myarray[1][2].setPrimitiveType(sf::Triangles);
 	 
-	}
+	
 		//window.clear();
 		//window.draw(myarray[1][2]);
 		//window.display();
 		
 		Sleep(80); // make cpu wait for x milliseconds within loop in order to visualize result as movie
 		
-		
-	}
+		*/
+
 return 0;
 }
