@@ -10,6 +10,7 @@
 
 
 
+
 class heart
 {
 	private:
@@ -19,7 +20,7 @@ class heart
 		std::vector<std::vector<int>> new_state;  //using new_state and state to distinguish newly excited cells from previously excited
 		std::vector<std::vector<int>> functional; //1 if functional 0 if disfunctional
 		std::vector<std::vector<int>> bond; //1 if bond to site above current cell, 0 if no bond above site
-
+		std::vector<std::vector<int>> unablated; // Defaults to zero initial value
 		int heart_time; //internal clock
 		//model parameters 
 		int tau; //refactory period
@@ -33,6 +34,7 @@ class heart
 		int total_bonds;
 		int total_functional;
 		int total_excited;
+		
 
 	public:
 
@@ -40,7 +42,7 @@ class heart
 		{
 
 		}
-		heart(int _L,  int _T, int _tau ,double _nu, double _epsilom, double _delta)
+		heart(const int _L,  int _T, int _tau ,double _nu, double _epsilom, double _delta)
 		{
 			L=_L;
 			nu= _nu;
@@ -48,13 +50,13 @@ class heart
 			T=_T;
 			epsilom=_epsilom;
 			delta=_delta;
-
 			heart_time = T;
-
+			
 			state.resize(L);
 			new_state.resize(L);
 			functional.resize(L);
 			bond.resize(L);
+			unablated.resize(L);
 			//pacemaker action
 			for(unsigned i=0; i<L; i++)
 			{
@@ -62,7 +64,7 @@ class heart
 				new_state[i].resize(L,0);
 				functional[i].resize(L,0);// none disfunctional at the moment
 				bond[i].resize(L, 1); // all transverse bonds present at the moment
-
+				unablated[i].resize(L,1);
 			}
 		//	total_functional = L*L;
 		//	total_bonds = L*L;
@@ -106,13 +108,13 @@ class heart
 				{
 					if(state[i][j]==1)//searching 4 neighbours of excited cell trying to excite if resting and if don't misfire and if there is a bond
 					{
-						new_state[((i+1)<L)*(i+1)][j]+=(state[((i+1)<L)*(i+1)][j]<1)*bond[i][j]*(1-(1-functional[((i+1)<L)*(i+1)][j])*(gsl_rng_uniform(r)<epsilom));
+						new_state[((i+1)<L)*(i+1)][j]+=(state[((i+1)<L)*(i+1)][j]<1)*bond[i][j]*(1-(1-functional[((i+1)<L)*(i+1)][j])*(gsl_rng_uniform(r)<epsilom))*unablated[((i+1)<L)*(i+1)][j];
 				
-						new_state[(i-1)*(i>0)+(L-1)*(i<1)][j]+=(state[(i-1)*(i>0)+(L-1)*(i<1)][j]<1)*bond[(i-1)*(i>0)+(L-1)*(i<1)][j]*(1-(1-functional[(i-1)*(i>0)+(L-1)*(i<1)][j])*(gsl_rng_uniform(r)<epsilom));
+						new_state[(i-1)*(i>0)+(L-1)*(i<1)][j]+=(state[(i-1)*(i>0)+(L-1)*(i<1)][j]<1)*bond[(i-1)*(i>0)+(L-1)*(i<1)][j]*(1-(1-functional[(i-1)*(i>0)+(L-1)*(i<1)][j])*(gsl_rng_uniform(r)<epsilom))*unablated[(i-1)*(i>0)+(L-1)*(i<1)][j];
 					
-						new_state[i][(j+1)*(j<L-1)] += (j<L-1)*(state[i][(j+1)*(j<L-1)]<1)*(1-(1-functional[i][(j+1)*(j<L-1)])*(gsl_rng_uniform(r)<epsilom));
+						new_state[i][(j+1)*(j<L-1)] += (j<L-1)*(state[i][(j+1)*(j<L-1)]<1)*(1-(1-functional[i][(j+1)*(j<L-1)])*(gsl_rng_uniform(r)<epsilom))*unablated[i][(j+1)*(j<L-1)];
 			
-						new_state[i][(j-1)*(j>0)]+= (j>0)*(state[i][(j-1)*(j>0)]<1)*(1-(1-functional[i][(j-1)*(j>0)])*(gsl_rng_uniform(r)<epsilom));
+						new_state[i][(j-1)*(j>0)]+= (j>0)*(state[i][(j-1)*(j>0)]<1)*(1-(1-functional[i][(j-1)*(j>0)])*(gsl_rng_uniform(r)<epsilom))*unablated[i][(j-1)*(j>0)];
 					}
 				}
 			}
@@ -199,7 +201,8 @@ class heart
 			//return state[i][j]/(1.0*T);
 			
 		}
-		void interact(sf::RenderWindow & renderWindow, int length) {
+		void interact(sf::RenderWindow & renderWindow, int length) 
+		{
 			sf::Event event;
 			float x;
 			float y;
@@ -213,8 +216,11 @@ class heart
 			{
 			case sf::Event::KeyPressed:
 			
-				state[My/length][Mx/length] = 0;
 			
+				state[My/length][Mx/length] = 0;
+				new_state[My/length][Mx/length] = 0;
+				unablated[My/length][Mx/length] = 0;
+
 			}
 			}
 		}

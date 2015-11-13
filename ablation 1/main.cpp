@@ -7,7 +7,7 @@
 #include "gsl_randist.h"
 int length = 5;
 int tfinal = 10000;
-const unsigned int size = 200;
+const int size = 200;
 //std::ofstream outfile("H:/fourth year/atrium/atrium/atrium/200.txt");
 
 std::stringstream sstm;
@@ -50,7 +50,6 @@ int main()
 		dexcited.setSize(sf::Vector2f(length,length));
 	
 		std::vector<std::vector<int>> state1(size,std::vector<int>(size)); // Defaults to zero initial value
-		
 		heart rainbow(size, T, tau, nu, 0.05, 0.05);
 
 		int state;
