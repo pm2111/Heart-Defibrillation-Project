@@ -20,7 +20,10 @@ private:
 	std::vector<std::vector<int>> functional; //1 if functional 0 if disfunctional
 	std::vector<std::vector<int>> bond; //1 if bond to site above current cell, 0 if no bond above site
 	std::vector<std::vector<int>> last_excited;
+	std::vector<std::vector<int>> last_excited_counter; // have a dummy counter so as to not interfere with APD dynamics
 	std::vector<std::vector<int>> refractory;
+	std::vector<std::vector<int>> total_rest; //have counter for total time cells spend in rest or refractory 
+
 
 
 	int heart_time; //internal clock
@@ -62,7 +65,9 @@ public:
 		functional.resize(L);
 		bond.resize(L);
 		last_excited.resize(L);
+		last_excited_counter.resize(L);
 		refractory.resize(L);
+		total_rest.resize(L);
 		//pacemaker action
 		for (unsigned i = 0; i<L; i++)
 		{
@@ -71,7 +76,9 @@ public:
 			functional[i].resize(L, 1);// none disfunctional at the moment
 			bond[i].resize(L, 1); // all transverse bonds present at the moment
 			last_excited[i].resize(L, T);
+			last_excited_counter[i].resize(L, 0);
 			refractory[i].resize(L, tau);
+			total_rest[i].resize(L,0);
 		}
 		//	total_functional = L*L;
 		//	total_bonds = L*L;
@@ -85,13 +92,13 @@ public:
 		Type = gsl_rng_mt19937;//random number generator using the Mersenne Twister algorithm 
 		r = gsl_rng_alloc(Type);
 
-		gsl_rng_set(r, time(NULL));//random number generator seeded with time
-		//gsl_rng_set(r, 0);//random number generator seeded with time
+		//gsl_rng_set(r, time(NULL));//random number generator seeded with time
+		gsl_rng_set(r, 10);//random number generator seeded with time
 
 		//assigning cells as having a bond above them or not and functional or not functional
 		int healthy = 1;
 
-		for (int j = healthy; j<L; j++)
+		for (int j = 0; j<L; j++)
 		{
 			for (int i = 0; i<L; i++)
 			{
@@ -104,7 +111,7 @@ public:
 			}
 		}
 
-
+		gsl_rng_set(r, 20);//random number generator seeded with time
 	}
 	void operate()//one time step
 	{
@@ -126,6 +133,8 @@ public:
 					new_state[i][(j - 1)*(j>0)] += (new_state[i][(j - 1)*(j>0)]<1)*(j>0)*(state[i][(j - 1)*(j>0)]<1)*(1 - (1 - functional[i][(j - 1)*(j>0)])*(gsl_rng_uniform(r)<epsilom));
 
 					refractory[i][j] = restitution(i, j);
+
+					total_rest[i][j] += last_excited_counter[i][j];
 				}
 			}
 		}
@@ -145,6 +154,8 @@ public:
 
 				last_excited[i][j] += (state[i][j] < 1) + (state[i][j]>1);//counts if not excited
 				last_excited[i][j] *= (state[i][j] < 1) + (state[i][j]>1); //cycles back to 0 if excited;  old states so don't put lastexcited to 0 before calculating new refractory
+				last_excited_counter[i][j] += (state[i][j] < 1) + (state[i][j]>1);//dummy counter
+				last_excited_counter[i][j] *= (state[i][j] < 1) + (state[i][j]>1); //dummy counter
 				refractory_period += refractory[i][j];
 
 			}
@@ -153,8 +164,9 @@ public:
 		//SAN  
 		for (int i = 0; i<L; i++)
 		{
-			new_state[i][0] += (state[i][0]<1)*(heart_time>T - 1)*(1 - (1 - functional[i][0])*(gsl_rng_uniform(r)<epsilom));
-			//will do something every T steps 
+			//new_state[i][0] += (state[i][0]<1)*(heart_time>T - 1)*(1 - (1 - functional[i][0])*(gsl_rng_uniform(r)<epsilom));
+			new_state[i][0] += (state[i][0]<1)*(heart_time>T - 1);
+
 		}
 
 		heart_time++;
@@ -191,6 +203,22 @@ public:
 	{
 		bond[i][j] = val;
 	}
+	void update_total_rest(int i, int j)
+	{
+		total_rest[i][j] += last_excited_counter[i][j];
+	}
+	double get_total_rest(int i,int j)
+	{
+		return total_rest[i][j];
+	}
+	void reset_total_rest(int i, int j)
+	{
+		total_rest[i][j] = 0;
+		last_excited_counter[i][j] = 0;
+	}
+
+
+
 	int get_tau()
 	{
 		return tau;
